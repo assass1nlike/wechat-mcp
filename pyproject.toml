@@ -1,0 +1,16 @@
+[project]
+name = "wechat-mcp"
+version = "0.1.0"
+description = "只读查看指定微信群消息的 MCP server"
+requires-python = ">=3.11"
+dependencies = ["mcp>=2.3", "cryptography", "zstandard", "filelock"]
+
+[project.scripts]
+wechat-mcp = "wechat_mcp.server:main"
+
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["wechat_mcp"]
