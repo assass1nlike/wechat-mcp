@@ -124,10 +124,10 @@ def _signature(src: Path) -> list:
     return sig
 
 
-def refresh(cfg: dict) -> tuple[Path, str, str]:
+def refresh(cfg: dict) -> tuple[Path, str, str, Path]:
     """让明文副本跟上微信的实时库，只重解有变化的库。调用方需持有 data/.lock。
 
-    返回（明文库目录，自己的微信号，说明）。解密失败但有旧副本时退回旧副本，说明里写清记录只到什么时候。
+    返回（明文库目录，自己的微信号，说明，微信的 db_storage 目录）。解密失败但有旧副本时退回旧副本，说明里写清记录只到什么时候。
     """
     wxid, storage, key = account(cfg)
     out = DATA / wxid
@@ -135,7 +135,7 @@ def refresh(cfg: dict) -> tuple[Path, str, str]:
     state_file = out / "state.json"
     state = json.loads(state_file.read_text(encoding="utf-8")) if state_file.exists() else {}
     if time.time() - state.get("checked", 0) < MIN_INTERVAL:
-        return out, wxid, ""
+        return out, wxid, "", storage
     try:
         for pattern in SOURCES:
             for src in sorted(storage.glob(pattern)):
@@ -153,7 +153,7 @@ def refresh(cfg: dict) -> tuple[Path, str, str]:
         if not (out / "message_0.db").exists():
             raise Error(f"读不了微信：{e}") from e
         t = time.strftime("%Y-%m-%d %H:%M", time.localtime((out / "message_0.db").stat().st_mtime))
-        return out, wxid, f"（最新的微信记录解密失败：{e}。下面是旧副本，只到 {t} 左右）\n"
+        return out, wxid, f"（最新的微信记录解密失败：{e}。下面是旧副本，只到 {t} 左右）\n", storage
     state["checked"] = time.time()
     state_file.write_text(json.dumps(state), encoding="utf-8")
-    return out, wxid, ""
+    return out, wxid, "", storage
